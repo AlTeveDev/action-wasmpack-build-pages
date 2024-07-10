@@ -1,0 +1,49 @@
+name: Wasmpack-pages
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    - name: Cache node modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo
+          ./target/
+          ./Cargo.lock
+        key: ${{ runner.os }}-build-cache-wasm
+
+    - name: Install wasmpack
+      run: cargo install wasm-pack
+
+    - name: Build
+      run: |
+        wasm-pack build --release --target web
+        cp index.html pkg/
+  
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: pkg/
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
